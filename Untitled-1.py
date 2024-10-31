@@ -1,20 +1,88 @@
-Playerf = {
-    "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), (40, 195), 4, "images/ships/battleship/battleshipgun.png", (0.4, 0.125), [-0.525, -0.34, 0.67, 0.49]],
-    "cruiser": ["cruiser", "images/ships/cruiser/cruiser.png", (200, 600), (40, 195), 2, "images/ships/cruiser/cruisergun.png", (0.4, 0.125), [-0.36, 0.64]],
-    "destroyer": ["destroyer", "images/ships/destroyer/destroyer.png", (275, 600), (30, 145), 2, "images/ships/destroyer/destroyergun.png", (0.5, 0.15), [-0.52, 0.71]],
-    "patrol boat": ["patrol boat", "images/ships/patrol boat/patrol boat.png", (425, 600), (20, 95), 0, "", None, None],
-    "submarine": ["submarine", "images/ships/submarine/submarine.png", (350, 600), (30, 145), 1, "images/ships/submarine/submarinegun.png", (0.25, 0.125), [-0.45]],
-    "carrier": ["carrier", "images/ships/carrier/carrier.png", (50, 600), (45, 245), 0, "", None, None],
-    "rescue ship": ["rescue ship", "images/ships/rescue ship/rescue ship.png", (500, 600), (20, 95), 0, "", None, None]
-}
+import pygame
 
-for name in Playerf.keys():
-    print(f"{name.center(20, ' ')}\n")  # Center the name with padding
-    print(f"{Playerf[name][1].center(40)}")
-    print(f"{str(Playerf[name][2]).center(40)}")
-    print(f"{str(Playerf[name][3]).center(40)}")
-    print(f"{str(Playerf[name][4]).center(40)}")
-    print(f"{Playerf[name][5].center(40)}" if Playerf[name][5] else "No gun image".center(40))
-    print(f"{str(Playerf[name][6]).center(40)}" if Playerf[name][6] else "No gun offset".center(40))
-    print(f"{str(Playerf[name][7]).center(40)}" if Playerf[name][7] else "No gun coordinates".center(40))
-    print("\n" + "="*40 + "\n")  # Separator for each ship
+# --- constants --- (UPPER_CASE names)
+
+SCREEN_WIDTH = 430
+SCREEN_HEIGHT = 410
+
+#BLACK = (  0,   0,   0)
+WHITE = (255, 255, 255)
+RED   = (255,   0,   0)
+
+FPS = 30
+
+# --- classses --- (CamelCase names)
+
+# empty
+
+# --- functions --- (lower_case names)
+
+# empty
+
+# --- main ---
+
+# - init -
+
+pygame.init()
+
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+#screen_rect = screen.get_rect()
+
+pygame.display.set_caption("Tracking System")
+
+# - objects -
+
+rectangle = pygame.rect.Rect(176, 134, 17, 17)
+rectangle_draging = False
+
+# - mainloop -
+
+clock = pygame.time.Clock()
+
+running = True
+
+while running:
+
+    # - events -
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:            
+                if rectangle.collidepoint(event.pos):
+                    rectangle_draging = True
+                    mouse_x, mouse_y = event.pos
+                    offset_x = rectangle.x - mouse_x
+                    offset_y = rectangle.y - mouse_y
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:            
+                rectangle_draging = False
+
+        elif event.type == pygame.MOUSEMOTION:
+            if rectangle_draging:
+                mouse_x, mouse_y = event.pos
+                rectangle.x = mouse_x + offset_x
+                rectangle.y = mouse_y + offset_y
+
+    # - updates (without draws) -
+
+    # empty
+
+    # - draws (without updates) -
+
+    screen.fill(WHITE)
+
+    pygame.draw.rect(screen, RED, rectangle)
+
+    pygame.display.flip()
+
+    # - constant game speed / FPS -
+
+    clock.tick(FPS)
+
+# - end -
+
+pygame.quit()
