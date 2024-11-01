@@ -1,9 +1,9 @@
 # module import
+
 import pygame
 
 # module Initialization 
 pygame.init()
-
 
 # game assets and objects 
 
@@ -37,9 +37,8 @@ class ship:
         # Draw the ship 
         window.blit(self.image, self.rect)
 
-
-
 # game utility function 
+
 def CreateGameGrid(rows, cols, CellSize, pos):
     #create game grid with coordinate for each cell 
 
@@ -120,9 +119,9 @@ def createfleet():
         )
     return fleet
 
+#  Game Settings and Variables
 
 ScreenWidth = 1260 
-
 ScreenHight = 960
 raws = 10
 cols = 10
@@ -133,10 +132,12 @@ CellSize = 50
 
 
 # pygame display Initialization 
+
 GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight))
 pygame.display.set_caption("Battle Ship Demo")
 
 # Game Lists/Dictionaries
+
 Playerf = {
     "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), (40, 195), 4, "images/ships/battleship/battleshipgun.png", (0.4, 0.125), [-0.525, -0.34, 0.67, 0.49]],
 
@@ -155,6 +156,7 @@ Playerf = {
 }
 
 # loading game variables 
+
 pGameGrid = CreateGameGrid(raws, cols, CellSize, (50, 50))
 pGameLogic = UpdateGameLogic(raws, cols)
 Playerfleet = createfleet()
@@ -174,6 +176,7 @@ printtest()
 
 
 # Main game loop 
+
 RunGame = True
 while RunGame:
 
