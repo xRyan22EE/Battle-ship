@@ -119,14 +119,23 @@ def createfleet():
         )
     return fleet
 
+def set_grid_size(new_rows, new_cols):
+    # function to set grid size and dynamically adjust cell size
+    global raws, cols, CellSize, pGameGrid, pGameLogic, cGameGrid, cGameLogic
+    raws = new_rows
+    cols = new_cols
+     # divide ScreenHight by 2 to leave space for both grids
+    CellSize = min(ScreenWidth // cols, ScreenHight // (2 * raws)) 
+    pGameGrid = CreateGameGrid(raws, cols, CellSize, (50, 50))
+    pGameLogic = UpdateGameLogic(raws, cols)
+    cGameGrid = CreateGameGrid(raws, cols, CellSize, (((ScreenWidth-50)-(cols * CellSize)), 50))
+    cGameLogic = UpdateGameLogic(raws, cols)
+
+
 #  Game Settings and Variables
 
 ScreenWidth = 1260 
 ScreenHight = 960
-raws = 10
-cols = 10
-CellSize = 50
-
 
 # colors 
 
@@ -157,12 +166,12 @@ Playerf = {
 
 # loading game variables 
 
-pGameGrid = CreateGameGrid(raws, cols, CellSize, (50, 50))
-pGameLogic = UpdateGameLogic(raws, cols)
+
+set_grid_size(10, 10)
+
+
 Playerfleet = createfleet()
 
-cGameGrid = CreateGameGrid(raws, cols, CellSize, (((ScreenWidth-50)-(raws * CellSize)),50))
-cGameLogic = UpdateGameLogic(raws, cols)
 Computerfleet = None
 
 printtest()
