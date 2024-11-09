@@ -322,8 +322,3 @@ while run_game:
     UpdateGameScreen(GameScreen)
 
 pygame.quit()
-
-
-
-ship1 = ship("battleship", "images/ships/battleship/battleship.png", (125, 600), (40, 195))
-
