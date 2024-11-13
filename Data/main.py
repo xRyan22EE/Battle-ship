@@ -146,6 +146,90 @@ class ship:
                     else:
                         self.return_to_start()
 
+    def computer_snap_to_grid(self, grid: list):
+        if self.rotation: # Horizontal
+
+            # Calculate the number of cells required to fit the ship
+            cells_required_x = self.rect.width // CellSize
+
+            # The ship is always 1 cell tall when horizontal
+            cells_required_y = 1
+            
+        else: # Vertical
+            # The ship is always 1 cell wide when vertical
+            cells_required_x = 1
+
+            # Calculate the number of cells required to fit the ship
+            cells_required_y = self.rect.height // CellSize
+
+        # Get the top-left position of the ship
+        current_top_left = self.rect.topleft
+
+        # Initialize variables to store the closest cell's top-left position and the minimum distance
+        closest_cell_top_left = None
+
+        # Set the minimum distance to infinity to ensure the first cell is selected
+        min_distance = float("inf")
+
+        # Iterate through the grid to find the closest cell to the ship
+        for row in grid:
+            for col in row:
+                # Get the top-left position of the current cell
+                cell_top_left_x = col[0]
+                cell_top_left_y = col[1]
+
+                # Calculate the distance between the ship and the current cell
+                distance = ((current_top_left[0] - cell_top_left_x) ** 2 +(current_top_left[1] - cell_top_left_y) ** 2) ** 0.5 
+                    # Pythagorean theorem (a^2 + b^2 = c^2) to calculate the distance between two points in 2D space (x, y)
+
+                # Check if the current cell is closer to the ship than the previous closest cell
+                if distance < min_distance:
+
+                    # Update the minimum distance and the closest cell's top-left position
+                    min_distance = distance
+
+                    # Set the closest cell's top-left position to the current cell's top-left position
+                    closest_cell_top_left = (cell_top_left_x, cell_top_left_y)
+
+        # Check if a closest cell was found
+        if closest_cell_top_left:
+            # Get the x and y coordinates of the closest cell's top-left position
+            snapped_x = closest_cell_top_left[0]
+            # Get the y coordinate of the closest cell's top-left position
+            snapped_y = closest_cell_top_left[1]
+
+            # Ensure the ship does not go out of the grid boundaries
+            if self.rotation: # Horizontal
+                # Check if the ship is within the grid boundaries when horizontal and snap to the closest cell if it is
+                if snapped_x + cells_required_x * CellSize > ScreenWidth:
+                    snapped_x = ScreenWidth - cells_required_x * CellSize
+            else: # Vertical
+                # Check if the ship is within the grid boundaries when vertical and snap to the closest cell if it is
+                if snapped_y + cells_required_y * CellSize > ScreenHight:
+                    snapped_y = ScreenHight - cells_required_y * CellSize
+
+            if self.rotation: # Horizontal 
+                # Snap the ship to the closest cell if it is within the grid boundaries when horizontal
+                if snapped_x + (cells_required_x * CellSize) <= ScreenWidth and snapped_y <= ScreenHight:
+                    self.rect.topleft = closest_cell_top_left
+                    self.rect.centerx = snapped_x + (cells_required_x * CellSize) // 2
+                    self.rect.centery = snapped_y + (cells_required_y * CellSize) // 2
+                else: # Return the ship to the start position if it is out of bounds
+                    self.return_to_start()
+            
+            else: # Vertical 
+                # Snap the ship to the closest cell if it is within the grid boundaries when vertical
+                if snapped_y + (cells_required_y * CellSize) <= ScreenHight: # Check if the ship is within the grid boundaries
+
+                    # Snap the ship to the closest cell if it is within the grid boundaries when vertical
+                    self.rect.topleft = closest_cell_top_left 
+
+                    # Center the ship in the cell by setting the x and y coordinates to the center of the cell
+                    self.rect.centerx = snapped_x + (cells_required_x * CellSize) // 2
+                    self.rect.centery = snapped_y + (cells_required_y * CellSize) // 2
+                else: # Return the ship to the start position if it is out of bounds
+                    self.return_to_start() # Return the ship to the start position if it is out of bounds
+
     def check_for_collision(self, other_ships: list) -> bool:
         CopyOfShip = other_ships.copy()
         CopyOfShip.remove(self)
@@ -183,12 +267,10 @@ def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, Co
                 # (window, color, (x, y, width, height), thickness)
                 pygame.draw.rect(Window, (255, 255, 255), (Col[0], Col[1], CellSize, CellSize), 1)
 
-def randomized_cumpute_ships(shiplist: list, gamegrid: list) -> None:
-    # Function to randomly place ships on the computer's grid
+def randomized_computer_ships(shiplist: list, gamegrid: list) -> None:
     for ship in shiplist:
         placed = False
         while not placed:
-
             # Reset ship's position
             ship.return_to_start()
 
@@ -199,19 +281,13 @@ def randomized_cumpute_ships(shiplist: list, gamegrid: list) -> None:
             else:
                 ship.rotation = False  # Keep vertical
 
-
-
             # Get the maximum position based on grid size and ship size to avoid going out of bounds
-            max_x = len(gamegrid[0]) - (ship.rect.width // CellSize if ship.rotation else 1) 
-            # Subtract 1 if ship is horizontal, else subtract the ship's width in cells to avoid going out of bounds
-
-
+            max_x = len(gamegrid[0]) - (ship.rect.width // CellSize if ship.rotation else 1)
             max_y = len(gamegrid) - (1 if ship.rotation else ship.rect.height // CellSize)
-            # Subtract 1 if ship is vertical, else subtract the ship's height in cells to avoid going out of bounds
 
             # Randomly select a starting cell within the allowed bounds
-            start_x = random.randint(0, max_x) # Random integer between 0 and max_x
-            start_y = random.randint(0, max_y) # Random integer between 0 and max_y
+            start_x = random.randint(0, max_x)
+            start_y = random.randint(0, max_y)
 
             # Calculate the top-left position in pixels for the grid
             ship.rect.topleft = (gamegrid[start_y][start_x][0], gamegrid[start_y][start_x][1])
@@ -219,12 +295,8 @@ def randomized_cumpute_ships(shiplist: list, gamegrid: list) -> None:
             # Check if this position collides with other ships in the fleet
             if not ship.check_for_collision(shiplist):
                 # Snap to grid if valid, and mark as placed
-                ship.snap_to_grid(gamegrid)
+                ship.computer_snap_to_grid(gamegrid)
                 placed = True
-
-            
-
-
 
 def printtest() -> None:
     print(" Player grid ".center(50, "#"))
@@ -249,8 +321,7 @@ def UpdateGameScreen(window: pygame.surface) -> None:
         ship.snap_to_grid(pGameGrid)
 
     for ship in Computerfleet:
-        ship.draw(window)
-        
+        ship.draw(window)        
 
     # Update the display
     pygame.display.update()
@@ -307,7 +378,7 @@ pygame.display.set_caption("Battle Ship Demo")
 Playerf = {
     "carrier": ["carrier", "images/ships/carrier/carrier.png", (50, 600), (45, 240)],
 
-    "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), (40, 192)],
+    "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), (50, 192)],
 
     "cruiser": ["cruiser", "images/ships/cruiser/cruiser.png", (200, 600), (40, 192)],
 
@@ -330,7 +401,7 @@ Playerfleet = createfleet()
 
 # create computer fleet
 Computerfleet = createfleet()
-randomized_cumpute_ships(Computerfleet, cGameGrid)
+randomized_computer_ships(Computerfleet, cGameGrid)
 
 
 printtest()
