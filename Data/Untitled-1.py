@@ -1,110 +1,359 @@
+# module import
 import pygame
+from grid import CreateGameGrid, UpdateGameLogic
 from game_utils import LoadImage
-class Ship:
-    def __init__(self, name: int, img: int, pos, obj_rows, obj_cols, cell_size):
-        self.img = "images/ships/battleship/battleship.png"
+# module Initialization 
+pygame.init()
+
+# game assets and objects 
+class ship:
+    def __init__(self, name: str, img: str, pos: tuple, size: tuple):
         self.name = name
-        self.image = LoadImage(img, (obj_cols * cell_size, obj_rows * cell_size))  # Scale image to fit grid size
-        self.rect = self.image.get_rect(topleft=pos)
+
+
+        # Set the start position of the ship to the position passed in the constructor. This is the position the ship will return to if it is not placed in the grid.
         self.start_pos = pos
-        self.obj_rows = obj_rows  # Number of rows the object occupies
-        self.obj_cols = obj_cols  # Number of columns the object occupies
-        self.cell_size = cell_size
+
+        # Load the Vertical Image.
+        self.vimg = LoadImage(img, size)
+        self.vimgwidth = self.vimg.get_width()
+        self.vimgheight = self.vimg.get_height()
+        self.vimgrect = self.vimg.get_rect()
+        self.vimgrect.topleft = pos
+
+        # Load the Horizontal Image.
+        self.himg = pygame.transform.rotate(self.vimg, -90)
+        self.himgwidth = self.himg.get_width()
+        self.himgheight = self.himg.get_height()
+        self.himgrect = self.himg.get_rect()
+        self.himgrect.topleft = pos
+        
+        # ship selection 
         self.active = False
 
-    def snap_to_grid(self, grid, start_x, start_y):
-        """
-        Snap the ship to the nearest free cells on the grid if possible.
-        
-        grid: 2D list representing the grid (False means free, True means occupied)
-        start_x, start_y: Coordinates for the start position of the grid
-        """
-        grid_rows = len(grid)
-        grid_cols = len(grid[0])
+        # Image and rectangle 
+        self.image = self.vimg
+        self.rect = self.vimgrect
+        self.rotation = False
+                  
+    def selectshipandmove(self) -> None:
+        while self.active:
 
-        # Calculate the top-left grid cell based on the ship's position
-        grid_col = (self.rect.left - start_x) // self.cell_size
-        grid_row = (self.rect.top - start_y) // self.cell_size
+            # sets the center of self.rect to follow the current position of the mouse. This means the ship tied to self.rect will move with the mouse.
+            self.rect.center = pygame.mouse.get_pos()
+            UpdateGameScreen(GameScreen)
 
-        # Boundary check: ensure object stays within grid limits
-        if grid_row + self.obj_rows > grid_rows or grid_col + self.obj_cols > grid_cols:
-            self.return_to_start()
-            return
+            for event in pygame.event.get():
 
-        # Check if the required grid cells for the object are all free
-        for r in range(self.obj_rows):
-            for c in range(self.obj_cols):
-                if grid[grid_row + r][grid_col + c]:  # Cell is occupied
-                    self.return_to_start()
-                    return
+                # checks if a mouse button was pressed.
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    
+                    # check for collision between ships in the fleet
+                    if not self.check_for_collision(Playerfleet):
 
-        # Mark the grid cells as occupied by this object
-        for r in range(self.obj_rows):
-            for c in range(self.obj_cols):
-                grid[grid_row + r][grid_col + c] = True
+                        # further checks if it was the left mouse button (button 1).
+                        if event.button == 1:
 
-        # Snap the object to the nearest cell position
-        self.rect.topleft = (start_x + grid_col * self.cell_size, start_y + grid_row * self.cell_size)
+                            # checks if the ship is in the grid. If it is, it will align the ship to the grid.  If not, it will return the ship to its start position.
+                            if self.CheckinGrid(pGameGrid):
+                                
+                                # aligns the center of two rectangles, self.himgrect and self.vimgrect, to the center of self.rect
+                                self.himgrect.center = self.vimgrect.center = self.rect.center
+                                self.active = False
 
-    def return_to_start(self):
-        # Return the ship to its start position if snapping fails
+                            else:
+
+                                # if the ship is not in the grid, it will return to its start position.
+                                self.rect.topleft = self.start_pos
+                                self.vimgrect.topleft = self.start_pos
+                                self.himgrect.topleft = self.start_pos
+
+                                # exits the loop, as self.active is now False, ending the movement of the ship.
+                                self.active = False
+                    if event.button == 3:
+                        self.ratate_ship()
+
+    def ratate_ship(self , rotateship = False) -> None:
+        if self.active or rotateship:
+            if rotateship == False:
+                self.rotation = True
+            else:
+                self.rotation = False
+        self.switch_image_and_rect()
+
+    def switch_image_and_rect(self) -> None:
+        # Switch the image and rectangle based on the orientation of the ship
+        if self.active:
+            self.image = self.himg
+            self.rect = self.himgrect
+        else:
+            self.image = self.vimg
+            self.rect = self.vimgrect  
+        self.himgrect.center = self.vimgrect.center = self.rect.center
+
+    def CheckinGrid(self, grid: list) -> bool:
+        # Check if the ship is in the grid
+
+        # Loop through each row in the grid
+        for row in grid:
+
+            # Loop through each cell in the row 
+            for col in row:
+
+                # Create a rectangle for the current cell in the grid
+                cell_rect = pygame.Rect(col[0], col[1], CellSize, CellSize)
+
+                # Check if the ship rectangle collides with the cell rectangle
+                if self.rect.colliderect(cell_rect):
+
+                    # Return True immediately if the ship is within any cell in the grid
+                    return True
+
+                
+        return False
+
+    def return_to_start(self) -> None:
+        # Return the ship to its start position
         self.rect.topleft = self.start_pos
+        self.vimgrect.center = self.start_pos
+        self.himgrect.center = self.start_pos 
 
-    def draw(self, window):
-        # Draw the ship at its current position
-        window.blit(self.image, self.rect)
+    def snap_to_grid(self, grid: list) -> None:
+        # Calculate the number of cells this ship spans based on its orientation and size
 
-# Example of usage
+        if self.rotation:  # Horizontal orientation
+            cells_required_x = self.rect.width // CellSize
+            cells_required_y = 1
+        else:  # Vertical orientation
+            cells_required_x = 1
+            cells_required_y = self.rect.height // CellSize
 
-def create_grid(rows, cols):
-    # Create a 2D grid (False means unoccupied, True means occupied)
-    return [[False for _ in range(cols)] for _ in range(rows)]
+        # Get the current top-left position of the ship
+        current_top_left = self.rect.topleft
 
-def main():
-    pygame.init()
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Snap to Grid Example")
+        # Initialize variables to find the closest cell top-left corner
+        closest_cell_top_left = None
+        min_distance = float("inf")
 
-    cell_size = 50
-    start_x, start_y = 50, 50
-    rows, cols = 10, 10
-    grid = create_grid(rows, cols)
+        # Iterate through each cell in the grid to find the nearest cell for alignment
+        if self.CheckinGrid(pGameGrid):
+         for row in grid:
+            for col in row:
+                # Calculate the top-left corner position for the current cell
+                cell_top_left_x = col[0]
+                cell_top_left_y = col[1]
 
-    # Create a ship that occupies 2 rows by 3 columns
-    ship = Ship("Battleship", "battleship.png", (100, 100), 2, 3, cell_size)
+                # Calculate the distance between the ship's top-left and the cell's top-left
+                distance = ((current_top_left[0] - cell_top_left_x) ** 2 +
+                            (current_top_left[1] - cell_top_left_y) ** 2) ** 0.5
+                
+                # Update closest cell if this cell is nearer
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_cell_top_left = (cell_top_left_x, cell_top_left_y)
 
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                # Activate the ship movement with mouse if clicked
-                ship.active = True
+        # Snap the ship's top-left position to the top-left of the closest cell if found
+        if closest_cell_top_left:
+            # Align the ship's top-left position to the calculated closest cell top-left corner
+            self.rect.topleft = closest_cell_top_left
+            self.vimgrect.topleft = self.himgrect.topleft = closest_cell_top_left
 
-        # If ship is active, move it with the mouse and snap on release
-        if ship.active:
-            ship.rect.center = pygame.mouse.get_pos()
+            # Adjust the center of the image rectangle to ensure proper alignment with the grid
+            self.rect.centerx = closest_cell_top_left[0] + (cells_required_x * CellSize) // 2
+            self.rect.centery = closest_cell_top_left[1] + (cells_required_y * CellSize) // 2
 
-            # Snap to grid on mouse release
-            if pygame.mouse.get_pressed()[0] == 0:  # Left mouse button released
-                ship.snap_to_grid(grid, start_x, start_y)
-                ship.active = False
+    def check_for_ollision(self, other_ships: list) -> bool:
+        # check for collision between two ships
 
-        # Draw everything
-        screen.fill((255, 255, 255))
+        # Create a copy of the other ships
+        CopyOfShip = other_ships.copy()
 
-        # Draw the grid for reference
-        for row in range(rows):
-            for col in range(cols):
-                rect = pygame.Rect(start_x + col * cell_size, start_y + row * cell_size, cell_size, cell_size)
-                pygame.draw.rect(screen, (200, 200, 200), rect, 1)
+        # Remove the current ship from the list
+        CopyOfShip.remove(self)
 
-        # Draw the ship
-        ship.draw(screen)
+        # Check for collision between the current ship and the other ships in the list 
+        for ship in CopyOfShip:
 
-        pygame.display.flip()
+            # Check if the current ship rectangle collides with the other ship rectangle
+            if self.rect.colliderect(ship.rect):
 
-    pygame.quit()
+                # Return True if there is a collision
+                return True
+            
+        # Return False if there is no collision
+        return False
 
-main()
+    def draw(self, window: pygame.Surface) -> None:
+        # Draw the ship 
+        window.blit(self.image, self.rect) # Draw the ship to the screen
+
+# game utility function 
+def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, ComputerGrid: list) -> None:
+    # Draw the grid to the screen
+    GameGrids = [PlayerGrid, ComputerGrid]
+
+    for grid in GameGrids:
+        # GameGrids = [PlayerGrid, ComputerGrid], grid = PlayerGrid or ComputerGrid
+        for Row in grid:
+            # Row = [Col, Col, Col, Col, Col, Col, Col, Col, Col, Col]
+            for Col in Row:
+                # Col = [(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y)], Row = (x, y)
+
+                # (window, color, (x, y, width, height), thickness)
+                pygame.draw.rect(Window, (255, 255, 255), (Col[0], Col[1], CellSize, CellSize), 1)
+                
+
+def printtest() -> None:
+
+    print(" Player grid ".center(50, "#"))
+    for i in pGameLogic:
+        print(i)
+    
+    print(" computer grid ".center(50, "#"))
+    for i in cGameLogic:
+        print(i)
+
+def UpdateGameScreen(window: pygame.surface) -> None:
+
+    # Fill the window with black color
+    window.fill((0, 0, 0))
+    
+    # Draw Grids to the screen
+    ShowGridOnScreen(window, CellSize, pGameGrid, cGameGrid)
+
+    # Draw Ships to the screen 
+    for ship in Playerfleet:
+        ship.draw(window)
+        ship.snap_to_grid(pGameGrid)
+
+    # Update the display
+    pygame.display.update()
+
+def createfleet() -> list:
+    # create fleet of ships
+    fleet = []
+    for name in Playerf.keys():
+        fleet.append(
+            ship(name, 
+            Playerf[name][1],
+            Playerf[name][2],
+            Playerf[name][3])
+        )
+    return fleet
+
+def sortfleet(ship, shiplist: list) -> None:
+    # function to sort ships in the list to the top of the list when selected to show on top of other ships
+    shiplist.remove(ship)
+    shiplist.append(ship)
+
+def set_grid_size(new_rows: int, new_cols: int) -> None:
+    # function to set grid size and dynamically adjust cell size
+    global raws, cols, CellSize, pGameGrid, pGameLogic, cGameGrid, cGameLogic
+    raws = new_rows
+    cols = new_cols
+
+    # divide ScreenHight by 2 to leave space for both grids and divide by raws to get the cell size for the grid
+    CellSize = min(ScreenWidth // cols, ScreenHight // (2 * raws)) 
+    # create game grid for player and computer grid with the new raws, cols and cell size
+    pGameGrid = CreateGameGrid(raws, cols, CellSize, (50, 50))
+    pGameLogic = UpdateGameLogic(raws, cols)
+    cGameGrid = CreateGameGrid(raws, cols, CellSize, (((ScreenWidth - 50) - (cols * CellSize)), 50))
+    cGameLogic = UpdateGameLogic(raws, cols)
+
+# Game Settings and Variables
+ScreenWidth = 1260 
+ScreenHight = 960
+
+# colors 
+
+
+
+# pygame display Initialization 
+GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight))
+pygame.display.set_caption("Battle Ship Demo")
+ # set the title of the window
+
+# Game Lists/Dictionaries
+    # Playerf = Player Fleet Dictionary     key: [name, image path, position, size]
+Playerf = {
+    "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), (40, 195)],
+
+    "cruiser": ["cruiser", "images/ships/cruiser/cruiser.png", (200, 600), (40, 195)],
+
+    "destroyer": ["destroyer", "images/ships/destroyer/destroyer.png", (275, 600), (30, 145)],
+
+    "patrol boat": ["patrol boat", "images/ships/patrol boat/patrol boat.png", (425, 600), (20, 95)],
+
+    "submarine": ["submarine", "images/ships/submarine/submarine.png", (350, 600), (30, 145)],
+
+    "carrier": ["carrier", "images/ships/carrier/carrier.png", (50, 600), (45, 245)],
+
+    "rescue ship": ["rescue ship", "images/ships/rescue ship/rescue ship.png", (500, 600), (20, 95)]
+}
+
+# loading game variables 
+
+ # set the grid size for the game (rows, cols)
+set_grid_size(10, 10)
+    
+     # create player fleet
+Playerfleet = createfleet()
+    
+        # create computer fleet
+Computerfleet = None
+
+printtest()
+
+# loading game sound Image
+
+
+
+# Initialise players 
+
+
+
+# Main game loop 
+run_game = True
+def handle_events() -> None:
+    global run_game
+
+    # for loop to handle events in the game 
+    for event in pygame.event.get():
+
+        # check if the event is a quit event 
+        if event.type == pygame.QUIT:
+
+            # set run_game to False to exit the game loop
+            run_game = False
+        
+        # check if the event is a mouse button down event
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+
+            # check if the mouse button pressed was the left mouse button
+            if event.button == 1:
+                # call the handle_ship_selection function to handle ship selection
+                handle_ship_selection()
+
+# function to handle ship selection
+def handle_ship_selection() -> None:
+
+    # for loop to iterate through the player fleet
+    for i in Playerfleet:
+
+        # check if the mouse position is within the rectangle of the ship
+        if i.rect.collidepoint(pygame.mouse.get_pos()):
+
+            # set the ship to active
+            i.active = True
+
+            # sort the ship to the top of the list to show on top of other ships
+            sortfleet(i, Playerfleet)
+
+            # move the ship to the mouse position and update the game screen
+            i.selectshipandmove()
+
+while run_game:
+    handle_events()
+    UpdateGameScreen(GameScreen)
+
+pygame.quit()
