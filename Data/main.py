@@ -241,7 +241,7 @@ class ship:
     def draw(self, window: pygame.Surface) -> None:
         window.blit(self.image, self.rect)
         
-        pygame.draw.rect(window, (255, 0, 0), self.rect, 1)  # Debugging: red rectangle around the ship
+        # pygame.draw.rect(window, (255, 0, 0), self.rect, 1)  # Debugging: red rectangle around the ship
 
     def __str__(self):
         return f"{self.name}: {self.rect.center} || {self.rect} || {self.vimg} || {self.himg} "
@@ -378,7 +378,7 @@ pygame.display.set_caption("Battle Ship Demo")
 Playerf = {
     "carrier": ["carrier", "images/ships/carrier/carrier.png", (50, 600), (45, 240)],
 
-    "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), (50, 192)],
+    "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), (40, 192)],
 
     "cruiser": ["cruiser", "images/ships/cruiser/cruiser.png", (200, 600), (40, 192)],
 
