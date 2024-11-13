@@ -10,7 +10,6 @@ pygame.init()
 
 # game assets and objects
 class ship:
-    
     # Class variable to store all created instances
     instances = []
 
@@ -58,7 +57,7 @@ class ship:
                 if event.type == pygame.MOUSEBUTTONDOWN:
 
                     # check for collision between ships in the fleet
-                    if not self.check_for_ccollision(Playerfleet):
+                    if not self.check_for_ollision(Playerfleet):
 
                         # further checks if it was the left mouse button (button 1).
                         if event.button == 1:
@@ -160,7 +159,7 @@ class ship:
             return True
         return False
 
-    def check_for_ccollision(self, other_ships: list) -> bool:
+    def check_for_ollision(self, other_ships: list) -> bool:
         # check for collision between two ships
 
         # Create a copy of the other ships
