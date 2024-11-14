@@ -3,13 +3,92 @@ import random
 import pygame
 from grid import CreateGameGrid
 from game_utils import LoadImage
-import time
 
 # module Initialization
 pygame.init()
 
 # game variables
 game_started = False # variable to check if the game has started
+
+
+# Game Settings and Variables
+ScreenWidth = 1260
+ScreenHight = 960
+
+
+# colors
+white = (255, 255, 255)
+black = (0, 0, 0)
+red = (255, 0, 0)
+
+
+# pygame display Initialization
+GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight))
+
+
+# set the title of the window
+pygame.display.set_caption("Battle Ship Demo")
+
+
+# Game Lists/Dictionaries
+
+
+# Playerf = Player Fleet Dictionary     key: [name, image path, position, size]
+Playerf = {
+    "carrier": ["carrier", "images/ships/carrier/carrier.png", (50, 600), 5],
+    "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), 4],
+    "cruiser": ["cruiser", "images/ships/cruiser/cruiser.png", (200, 600), 4],
+    "destroyer": ["destroyer", "images/ships/destroyer/destroyer.png", (275, 600), 3],
+    "submarine": ["submarine", "images/ships/submarine/submarine.png", (350, 600), 3],
+    "patrol boat": ["patrol boat", "images/ships/patrol boat/patrol boat.png", (425, 600), 2],
+    "rescue ship": ["rescue ship", "images/ships/rescue ship/rescue ship.png", (500, 600), 2]
+}
+
+
+# loading game variables
+
+
+# loading game sound and Image
+start_img = pygame.image.load("images/Button/start_btn.png").convert_alpha()
+
+
+# Button class for start and exit button and other buttons
+class Button():
+    def __init__(self, x, y, img) -> None:
+        self.image = img  # load the image of the button
+        # Calculate the desired size based on the screen size
+        button_width = ScreenWidth // 10
+        button_height = ScreenHight // 15
+        self.image = pygame.transform.scale(self.image,
+                                            (button_width, button_height))  # scale the image to the desired size
+        self.rect = self.image.get_rect()  # get the rectangle of the image
+        self.rect.center = (x, y)  # set the position of the button
+        self.clicked = False  # set the button to not clicked
+
+    def Draw(self, window) -> bool:
+
+        action = False  # set the action to False
+
+        # grab the mouse position
+        pos = pygame.mouse.get_pos()
+
+        # check if the mouse is over the button
+        if self.rect.collidepoint(pos):
+
+            # if the button is clicked, set the clicked variable to True and perform the action
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                self.clicked = True
+                action = True
+
+            # if the button is not clicked, reset the clicked variable
+            if pygame.mouse.get_pressed()[0] == 0:
+                self.clicked = False
+        # draw the button on the screen
+        window.blit(self.image, (self.rect.x, self.rect.y))
+        return action
+# Button instance for start and exit button
+start_button = Button(ScreenWidth // 2, (ScreenHight // 2) - ScreenWidth // 10, start_img)
+
 
 # game assets and objects
 class ship:
@@ -271,7 +350,7 @@ class ship:
     def draw(self, window: pygame.Surface) -> None:
         window.blit(self.image, self.rect)
 
-        pygame.draw.rect(window, (255, 0, 0), self.rect, 1)  # Debugging: red rectangle around the ship
+        pygame.draw.rect(window, red, self.rect, 1)  # Debugging: red rectangle around the ship
 
     def is_placed_in_grid(self) -> bool:
         # Check if the ship is placed in the grid and not active
@@ -279,6 +358,7 @@ class ship:
         # Return True if the ship is placed in the grid and not active, otherwise return False
         return self.CheckinGrid(pGameGrid) and not self.active
 
+    # Debugging methods
     def __str__(self):
         return f"{self.name}: {self.rect.center} || {self.rect} || {self.vimg} || {self.himg} "
     
@@ -288,7 +368,7 @@ class ship:
             print(ships)
 
 
-# game utility function
+# game utility functions
 def print_game_state() -> None:
     # Function to print the current state of the game
     def create_grid_view(fleet, reference_grid): # Create a grid view with ships placed on it
@@ -383,7 +463,7 @@ def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, Co
                 # Col = [(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y)], Row = (x, y)
 
                 # (window, color, (x, y, width, height), thickness)
-                pygame.draw.rect(Window, (255, 255, 255), (Col[0], Col[1], CellSize, CellSize), 1)
+                pygame.draw.rect(Window, white, (Col[0], Col[1], CellSize, CellSize), 1)
 
 def randomized_computer_ships(shiplist: list, gamegrid: list) -> None:
     for ship in shiplist:
@@ -420,7 +500,7 @@ def UpdateGameScreen(window: pygame.surface) -> None:
     global game_started # Access the global game_started variable
 
     # Fill the window with black color
-    window.fill((0, 0, 0))
+    window.fill(black)
 
     # Draw Grids to the screen
     ShowGridOnScreen(window, CellSize, pGameGrid, cGameGrid)
@@ -475,122 +555,6 @@ def set_grid_size(new_rows: int, new_cols: int) -> None:
     pGameGrid = CreateGameGrid(raws, cols, CellSize, (50, 50))
     cGameGrid = CreateGameGrid(raws, cols, CellSize, (((ScreenWidth - 50) - (cols * CellSize)), 50))
 
-# Game Settings and Variables
-ScreenWidth = 1260
-ScreenHight = 960
-
-# colors
-
-
-# pygame display Initialization
-GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight))
-pygame.display.set_caption("Battle Ship Demo")
-# set the title of the window
-
-# Game Lists/Dictionaries
-
-
-# Playerf = Player Fleet Dictionary     key: [name, image path, position, size]
-Playerf = {
-    "carrier": ["carrier", "images/ships/carrier/carrier.png", (50, 600), 5],
-    "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), 4],
-    "cruiser": ["cruiser", "images/ships/cruiser/cruiser.png", (200, 600), 4],
-    "destroyer": ["destroyer", "images/ships/destroyer/destroyer.png", (275, 600), 3],
-    "submarine": ["submarine", "images/ships/submarine/submarine.png", (350, 600), 3],
-    "patrol boat": ["patrol boat", "images/ships/patrol boat/patrol boat.png", (425, 600), 2],
-    "rescue ship": ["rescue ship", "images/ships/rescue ship/rescue ship.png", (500, 600), 2]
-}
-
-# loading game variables
-
-# set the grid size for the game (rows, cols)
-set_grid_size(10, 10)
-
-# create player fleet
-Playerfleet = createfleet()
-
-# create computer fleet
-Computerfleet = createfleet()
-randomized_computer_ships(Computerfleet, cGameGrid)
-
-
-# ============================= verison 1.3.4 =============================
-
-# loading game sound and Image
-start_img = pygame.image.load("images/Button/start_btn.png").convert_alpha()
-
-
-# Button class for start and exit button and other buttons
-class Button():
-    
-    def __init__(self, x, y, img) -> None:
-        self.image = img    # load the image of the button
-        # Calculate the desired size based on the screen size
-        button_width = ScreenWidth // 10
-        button_height = ScreenHight // 15
-        self.image = pygame.transform.scale(self.image, (button_width, button_height))  # scale the image to the desired size
-        self.rect = self.image.get_rect()   # get the rectangle of the image
-        self.rect.center = (x, y)  # set the position of the button
-        self.clicked = False  # set the button to not clicked
-
-    def Draw(self, window) -> bool:
-
-        action = False  # set the action to False
-
-        # grab the mouse position
-        pos  = pygame.mouse.get_pos()
-        
-        # check if the mouse is over the button
-        if self.rect.collidepoint(pos):
-
-            # if the button is clicked, set the clicked variable to True and perform the action
-            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
-                self.clicked = True
-                action = True
-
-            # if the button is not clicked, reset the clicked variable
-            if pygame.mouse.get_pressed()[0] == 0:
-                self.clicked = False
-        # draw the button on the screen
-        window.blit(self.image, (self.rect.x, self.rect.y))
-        return action
-        
-# Button instance for start and exit button
-
-start_button = Button(ScreenWidth//2,(ScreenHight//2) - ScreenWidth//10 , start_img)
-
-
-
-# ===========================================================================
-
-# Initialise players
-
-
-# Main game loop
-run_game = True
-
-
-def handle_events() -> None:
-    global run_game
-
-    # for loop to handle events in the game
-    for event in pygame.event.get():
-
-        # check if the event is a quit event
-        if event.type == pygame.QUIT:
-
-            # set run_game to False to exit the game loop
-            run_game = False
-
-        # check if the event is a mouse button down event
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-
-            # check if the mouse button pressed was the left mouse button
-            if event.button == 1:
-                # call the handle_ship_selection function to handle ship selection
-                handle_ship_selection()
-
-
 # function to handle ship selection
 def handle_ship_selection() -> None:
     # for loop to iterate through the player fleet
@@ -608,7 +572,42 @@ def handle_ship_selection() -> None:
             i.selectshipandmove()
 
 
-# ship.view_all_instances()
+# set the grid size for the game (rows, cols)
+set_grid_size(10, 10)
+
+
+# Initialise players
+# create player fleet
+Playerfleet = createfleet()
+
+# create computer fleet
+Computerfleet = createfleet()
+randomized_computer_ships(Computerfleet, cGameGrid)
+
+
+
+# Main game loop
+run_game = True
+
+def handle_events() -> None:
+    global run_game
+
+    # for loop to handle events in the game
+    for event in pygame.event.get():
+
+        # check if the event is a quit event
+        if event.type == pygame.QUIT:
+
+            # set run_game to False for exiting the game loop
+            run_game = False
+
+        # check if the event is a mouse button down event
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+
+            # check if the mouse button pressed was the left mouse button
+            if event.button == 1:
+                # call the handle_ship_selection function to handle ship selection
+                handle_ship_selection()
 
 while run_game:
     handle_events()
