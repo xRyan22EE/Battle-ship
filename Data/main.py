@@ -533,7 +533,7 @@ class Button():
         self.rect.center = (x, y)  # set the position of the button
         self.clicked = False  # set the button to not clicked
 
-    def Draw(self, window) -> None:
+    def Draw(self, window) -> bool:
 
         action = False  # set the action to False
 
