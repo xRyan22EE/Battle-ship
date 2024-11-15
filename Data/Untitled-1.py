@@ -1,65 +1,41 @@
-#  - - - - - - - - - - - - - - - - - - Modules Import - - - - - - - - - - - - - - - - - -
-# Import functions from game's files
+# module import
+import random
+import pygame
 from grid import CreateGameGrid
 from game_utils import LoadImage
 from Buttons import Button
-
-# Import modules
-import pygame
-import random
-import copy
-import math
-
-# - - - - - - - - - - - - - - - - - - Initialization - - - - - - - - - - - - - - - - - -
 # module Initialization
 pygame.init()
 
 # game variables
 game_started = False # variable to check if the game has started
+settings_active = False
+
 
 # Game Settings and Variables
 ScreenWidth = 1260
 ScreenHight = 960
-grid_size = 10
-resetGameGrid = True
-game_over = False
 
-# Set first shot out of boundaries till the user input
-yCooForShots = grid_size +1
-xCooForShots = grid_size +1
 
-# Set the first turn
-player1Turn = True
-player2Turn = False
-
-# Set colors (R,G,B)
+# colors
 white = (255, 255, 255)
 black = (0, 0, 0)
 red = (255, 0, 0)
-green = (0, 255, 0)
-blue = (0, 0, 255)
-orange = (245, 145, 30)
 
-# Colors of shots taken
-colors = {
-    '..': black,
-    'S': red,
-    'H': orange,
-    'M': blue}
 
 # pygame display Initialization
 GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight))
 
+
 # set the title of the window
 pygame.display.set_caption("Battle Ship Demo")
 
+
 # Game Lists/Dictionaries
 
-# Initialize copy of players grids, where copy_grids[0] is a list for player 1, and copy_grids[1] is a list for player 2
-copy_grids = [[],[]]
 
-# Players_fleet  = Player Fleet Dictionary     key: [name, image path, position, size, health]
-Players_fleet = {
+# Playerf = Player Fleet Dictionary     key: [name, image path, position, size]
+Playerf = {
     "carrier": ["carrier", "images/ships/carrier/carrier.png", (50, 600), 5],
     "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), 4],
     "cruiser": ["cruiser", "images/ships/cruiser/cruiser.png", (200, 600), 4],
@@ -69,23 +45,19 @@ Players_fleet = {
     "rescue ship": ["rescue ship", "images/ships/rescue ship/rescue ship.png", (500, 600), 2]
 }
 
-# Set Players Ship's Health, where each key represents the firs two letters of the ship's name
-Player1Health = {
-    "ca": 5, "ba": 4, "cr": 4, "de": 3, "su": 3, "pa": 2, "re": 2}
-Player2Health = {
-    "ca": 5, "ba": 4, "cr": 4, "de": 3, "su": 3, "pa": 2, "re": 2}
 
 # loading game variables
 
+
 # loading game sound and Image
 start_img = pygame.image.load("images/Button/start_btn.png").convert_alpha()
+exit_img = pygame.image.load("images/Button/exit_btn.png").convert_alpha()
+setting_img = pygame.image.load("images/Button/settings_icon.png").convert_alpha()
 
-# - - - - - - - - - - - - - - Buttons - - - - - - - - - - - - - -
 
-# Button instance for start and exit button
-start_button = Button(ScreenWidth // 2, (ScreenHight // 2) - ScreenWidth // 10, start_img, ScreenHight, ScreenWidth)
 
-# - - - - - - - - Game Assets and Objects - - - - - - - - -
+
+# game assets and objects
 class ship:
     # Class variable to store all created instances
     instances = []
@@ -143,7 +115,7 @@ class ship:
 
         # Resize each ship according to the new CellSize
         for ship in Playerfleet + Computerfleet:
-            ship.resize_ship(Players_fleet[ship.name][3])  # Pass in the cell count for each ship
+            ship.resize_ship(Playerf[ship.name][3])  # Pass in the cell count for each ship
 
     def selectshipandmove(self) -> None:
         if game_started:
@@ -294,7 +266,7 @@ class ship:
                     # Set the closest cell's top-left position to the current cell's top-left position
                     closest_cell_top_left = (cell_top_left_x, cell_top_left_y)
 
-        # Check if closest cell was found
+        # Check if a closest cell was found
         if closest_cell_top_left:
             # Get the x and y coordinates of the closest cell's top-left position
             snapped_x = closest_cell_top_left[0]
@@ -345,7 +317,7 @@ class ship:
     def draw(self, window: pygame.Surface) -> None:
         window.blit(self.image, self.rect)
 
-        # pygame.draw.rect(window, red, self.rect, 1)  # Debugging: red rectangle around the ship
+        pygame.draw.rect(window, red, self.rect, 1)  # Debugging: red rectangle around the ship
 
     def is_placed_in_grid(self) -> bool:
         # Check if the ship is placed in the grid and not active
@@ -362,17 +334,104 @@ class ship:
         for ships in cls.instances:
             print(ships)
 
-# - - - - - - - - Ships Related Functions - - - - - - - -
-def createfleet() -> list:
-    fleet = []
-    for name, (img_name, img_path, pos, cell_count) in Players_fleet.items():
-        # Calculate the ship size in pixels based on CellSize and cell count
-        if name != "patrol boat" and name != "rescue ship":
-            adjusted_size = (CellSize, cell_count * CellSize)
-        else:
-            adjusted_size = (CellSize*0.65, CellSize * cell_count)
-        fleet.append(ship(name, img_path, pos, adjusted_size))
-    return fleet
+
+# game utility functions
+def print_game_state() -> None:
+    # Function to print the current state of the game
+    def create_grid_view(fleet, reference_grid): # Create a grid view with ships placed on it
+
+
+        # Initialize empty grid
+        Vrows = raws
+        Vcols = cols
+
+        grid = [[' .. ' for Cols in range(Vcols)] for Raws in range(Vrows)]  # Create an empty grid with dots representing empty cells in the grid (..)
+        
+        # Map ships to grid using grid coordinates
+        for ship in fleet:
+
+            # Calculate ship's starting grid position using the correct reference grid
+            start_x = (ship.rect.x - reference_grid[0][0][0]) // CellSize
+            start_y = (ship.rect.y - reference_grid[0][0][1]) // CellSize
+            
+            # Calculate ship length in cells
+            if ship.rotation:  # Horizontal
+                length_x = ship.rect.width // CellSize # Calculate the length of the ship in cells
+                length_y = 1 # Ship is horizontal, so length in y is 1
+            else:  # Vertical
+                length_x = 1 # Ship is vertical, so length in x is 1
+                length_y = ship.rect.height // CellSize # Calculate the length of the ship in cells
+            
+            # Fill all cells occupied by the ship
+
+            for dx in range(length_x): # Loop through the ship's length in x
+                for dy in range(length_y): # Loop through the ship's length in y
+
+                    x = start_x + dx # Calculate the x coordinate of the cell
+                    y = start_y + dy # Calculate the y coordinate of the cell
+
+                    # Check if the cell is within the grid boundaries
+                    if 0 <= x < Vcols and 0 <= y < Vrows: # Check if the cell is within the grid boundaries
+
+                        grid[y][x] = f' {ship.name[:2]} ' # Fill the cell with the ship's name (first two characters)
+        
+        return grid
+
+    def print_fleet_grid(fleet, reference_grid, title):
+        print(f"\n=== {title} ===")
+        
+        # Print column headers
+        print("   ", end="")
+        for i in range(10):
+            print(f"  {i} ", end="")
+        print("\n")
+        
+        # Create and print grid with ships
+        grid = create_grid_view(fleet, reference_grid)
+        for row_num, row in enumerate(grid): # Loop through the grid rows
+
+            print(f"{row_num:2d} ", end="") # Print the row number with 2 digits (e.g., 01, 02, ..., 10)
+
+            print("".join(row)) # Print the row with ships and empty cells (..)
+        
+        # Print ship coordinates and lengths
+        print(f"\n{title} Ship Positions:")
+        
+        for ship in fleet:
+
+            # Calculate ship's starting grid position using the correct reference grid
+            start_x = (ship.rect.x - reference_grid[0][0][0]) // CellSize
+            start_y = (ship.rect.y - reference_grid[0][0][1]) // CellSize
+
+            # Calculate ship length in cells
+            length = ship.rect.width // CellSize if ship.rotation else ship.rect.height // CellSize
+
+            # Print ship name, starting position, orientation, and length
+            orientation = "Horizontal" if ship.rotation else "Vertical"
+
+            # Print ship name, starting position, orientation, and length
+            print(f"{ship.name:12} at ({start_x}, {start_y}) - {orientation} - Length: {length}")
+
+        print()
+
+    # Print both player and computer grids using their respective reference grids
+    print_fleet_grid(Playerfleet, pGameGrid, "Player Grid")
+    print_fleet_grid(Computerfleet, cGameGrid, "Computer Grid")
+
+def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, ComputerGrid: list) -> None:
+    # Draw the grid to the screen
+    GameGrids = [PlayerGrid, ComputerGrid]
+
+    for grid in GameGrids:
+        # GameGrids = [PlayerGrid, ComputerGrid], grid = PlayerGrid or ComputerGrid
+        for Row in grid:
+            # Row = [Col, Col, Col, Col, Col, Col, Col, Col, Col, Col]
+            for Col in Row:
+                # Col = [(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y),(x, y)], Row = (x, y)
+
+                # (window, color, (x, y, width, height), thickness)
+                pygame.draw.rect(Window, white, (Col[0], Col[1], CellSize, CellSize), 1)
+
 def randomized_computer_ships(shiplist: list, gamegrid: list) -> None:
     for ship in shiplist:
         placed = False
@@ -403,15 +462,88 @@ def randomized_computer_ships(shiplist: list, gamegrid: list) -> None:
                 # Snap to grid if valid, and mark as placed
                 ship.computer_snap_to_grid(gamegrid)
                 placed = True
+
+def UpdateGameScreen(window: pygame.surface) -> None:
+    global game_started, run_game, settings_active # Access the global game_started variable to update the game state and run_game to exit the game loop
+
+    # Fill the window with black color
+    window.fill(black)
+
+    # Draw Grids to the screen
+    ShowGridOnScreen(window, CellSize, pGameGrid, cGameGrid)
+
+    # Draw Ships to the screen
+    for ship in Playerfleet:
+        ship.draw(window)
+        ship.snap_to_grid(pGameGrid)
+
+    for ship in Computerfleet:
+        ship.draw(window)
+
+    # Draw Buttons to the screen and check for button clicks to start the game or exit the game or show settings
+    if all_ships_placed() and not game_started:
+       if start_button.Draw(window):
+            game_started = True
+            print_game_state()
+    
+    if exit_button.Draw(window) and not settings_active:
+        run_game = False
+    if game_started:
+        exit_button.rect.center = (ScreenWidth // 2, (ScreenHight // 2) - ScreenWidth // 10)
+
+    if setting_button.Draw(window): 
+        settings_active = not settings_active  # Toggle settings menu
+
+    # Draw settings panel if active
+    if settings_active:
+        # Draw semi-transparent overlay
+        overlay = pygame.Surface((ScreenWidth, ScreenHight))
+        overlay.fill((0, 0, 0))
+        overlay.set_alpha(128)
+        window.blit(overlay, (0, 0))
+        
+        # Draw settings panel
+        window.blit(settings_panel, settings_panel_rect)
+        
+
+
+    # Update the display    
+    pygame.display.update()
+
+def createfleet() -> list:
+    fleet = []
+    for name, (img_name, img_path, pos, cell_count) in Playerf.items():
+        # Calculate the ship size in pixels based on CellSize and cell count
+        if name != "patrol boat" and name != "rescue ship":
+            adjusted_size = (CellSize, cell_count * CellSize)
+        else:
+            adjusted_size = (CellSize*0.65, CellSize * cell_count)
+        fleet.append(ship(name, img_path, pos, adjusted_size))
+    return fleet
+
 def all_ships_placed() -> bool:
     # Check if all ships are placed in the grid
 
     # Return True if all ships are placed in the grid, otherwise return False
     return all(ship.is_placed_in_grid() for ship in Playerfleet)
+
 def sortfleet(ship, shiplist: list) -> None:
     # function to sort ships in the list to the top of the list when selected to show on top of other ships
     shiplist.remove(ship)
     shiplist.append(ship)
+
+def set_grid_size(new_rows: int, new_cols: int) -> None:
+    # function to set grid size and dynamically adjust cell size
+    global raws, cols, CellSize, pGameGrid, pGameLogic, cGameGrid, cGameLogic
+    raws = new_rows
+    cols = new_cols
+
+    # divide ScreenHight by 2 to leave space for both grids and divide by raws to get the cell size for the grid
+    CellSize = min(ScreenWidth // cols, ScreenHight // (2 * raws))
+    # create game grid for player and computer grid with the new raws, cols and cell size
+    pGameGrid = CreateGameGrid(raws, cols, CellSize, (50, 50))
+    cGameGrid = CreateGameGrid(raws, cols, CellSize, (((ScreenWidth - 50) - (cols * CellSize)), 50))
+
 # function to handle ship selection
 def handle_ship_selection() -> None:
     # for loop to iterate through the player fleet
@@ -428,320 +560,57 @@ def handle_ship_selection() -> None:
             # move the ship to the mouse position and update the game screen
             i.selectshipandmove()
 
-# - - - - - - - - - - Turns based System - - - - - - - - - - -
 
-# - - - - - - - - Search for Hits System - - - - - - - - -
-def search_hit(yCooForShots, xCooForShots):
-    global player1,player1_fleet, player1Turn , player2, player2_fleet , game_over
-
-    #Check for valid input
-    valid_input = True
-    # Check for a sunken ship
-    sunken_ship = False
-    sunkenList = []
-    #reset player turn
-    player1Turn = True
-    # Based on last turn, switch the current player and opponent
-    CurrentPlayer = (player1,player1_fleet,player1_reference) if player1Turn else (player2,player2_fleet,player2_reference)
-    CurrentOpponent = (player2,player2_fleet,player2_reference) if player1Turn else (player1,player1_fleet,player1_reference)
-
-    # check game stats by looking for sunken ships
-    def game_stats():
-        global game_over
-        ships_sunken = 0
-        for ship in CurrentOpponent[1].keys():
-            if CurrentOpponent[1][ship] == 0:
-                ships_sunken += 1
-        if ships_sunken == 7:
-            game_over = True
-        else:
-            game_over = False
-
-    if not game_over:
-        # if shot is not a miss or empty
-        if CurrentOpponent[0][yCooForShots][xCooForShots] != 'M':
-            if CurrentOpponent[0][yCooForShots][xCooForShots] != '..':
-                # get ship's name
-                shipId = CurrentOpponent[0][yCooForShots][xCooForShots]
-                # validate that shipId exists in the current opponent's fleet
-                if str(shipId) in CurrentOpponent[1].keys():
-                    # subtract one from the ship's health
-                    CurrentOpponent[1][shipId] -= 1
-                    # if ship's health is 0
-                    if CurrentOpponent[1][shipId] == 0:
-                        # create temp list to store ship's position
-                        sunkenList = []
-                        # iterate reference grid to find ship's position
-                        for i, row in enumerate(CurrentOpponent[2]):
-                            for j, cell in enumerate(row):
-                                if cell == shipId:
-                                    sunkenList.append((i, j))
-                        # change sunken ship to 'S'
-                        for i in range(len(sunkenList)):
-                            CurrentOpponent[0][sunkenList[i][0]][sunkenList[i][1]] = 'S'
-                        sunken_ship = True
-                    # change ship's hit to 'H'
-                    else:
-                        CurrentOpponent[0][yCooForShots][xCooForShots] = 'H'
-            # change empty to miss 'M'
-            else:
-                CurrentOpponent[0][yCooForShots][xCooForShots] = 'M'
-        else:
-            game_stats()
-            if not game_over:
-                valid_input = False
-    game_stats()
-    return (valid_input,CurrentOpponent[0][yCooForShots][xCooForShots],sunken_ship,sunkenList)
-
-# - - - - - - - - Game Utility Functions - - - - - - - - -
-# game utility functions
-def print_game_state() -> None:
-    global copy_grids
-    copy_grids = []
-    # Function to print the current state of the game
-    def create_grid_view(fleet, reference_grid):  # Create a grid view with ships placed on it
-
-        # Initialize empty grid
-        Vrows = raws
-        Vcols = cols
-
-        grid = [['..' for Cols in range(Vcols)] for Raws in
-                range(Vrows)]  # Create an empty grid with dots representing empty cells in the grid (..)
-
-        # Map ships to grid using grid coordinates
-        for ship in fleet:
-
-            # Calculate ship's starting grid position using the correct reference grid
-            start_x = (ship.rect.x - reference_grid[0][0][0]) // CellSize
-            start_y = (ship.rect.y - reference_grid[0][0][1]) // CellSize
-
-            # Calculate ship length in cells
-            if ship.rotation:  # Horizontal
-                length_x = ship.rect.width // CellSize  # Calculate the length of the ship in cells
-                length_y = 1  # Ship is horizontal, so length in y is 1
-            else:  # Vertical
-                length_x = 1  # Ship is vertical, so length in x is 1
-                length_y = ship.rect.height // CellSize  # Calculate the length of the ship in cells
-
-            # Fill all cells occupied by the ship
-
-            for dx in range(length_x):  # Loop through the ship's length in x
-                for dy in range(length_y):  # Loop through the ship's length in y
-
-                    x = start_x + dx  # Calculate the x coordinate of the cell
-                    y = start_y + dy  # Calculate the y coordinate of the cell
-
-                    # Check if the cell is within the grid boundaries
-                    if 0 <= x < Vcols and 0 <= y < Vrows:  # Check if the cell is within the grid boundaries
-
-                        grid[y][x] = f'{ship.name[:2]}'  # Fill the cell with the ship's name (first two characters)
-
-        return grid
-
-    def print_fleet_grid(fleet, reference_grid, title):
-        global copy_grids
-        print(f"\n=== {title} ===")
-
-        # Print column headers
-        print("   ", end="")
-        for i in range(10):
-            print(f"  {i} ", end="")
-        print("\n")
-
-        # Create and print grid with ships
-        grid = create_grid_view(fleet, reference_grid)
-        copy_grids.append(grid)
-        for row_num, row in enumerate(grid):  # Loop through the grid rows
-
-            print(f"{row_num:2d} ", end="")  # Print the row number with 2 digits (e.g., 01, 02, ..., 10)
-
-            print("   ".join(row))  # Print the row with ships and empty cells (..)
-
-        # Print ship coordinates and lengths
-        print(f"\n{title} Ship Positions:")
-
-        for ship in fleet:
-            # Calculate ship's starting grid position using the correct reference grid
-            start_x = (ship.rect.x - reference_grid[0][0][0]) // CellSize
-            start_y = (ship.rect.y - reference_grid[0][0][1]) // CellSize
-
-            # Calculate ship length in cells
-            length = ship.rect.width // CellSize if ship.rotation else ship.rect.height // CellSize
-
-            # Print ship name, starting position, orientation, and length
-            orientation = "Horizontal" if ship.rotation else "Vertical"
-
-            # Print ship name, starting position, orientation, and length
-            print(f"{ship.name:12} at ({start_x}, {start_y}) - {orientation} - Length: {length}")
-
-        print()
-
-    # Print both player and computer grids using their respective reference grids
-    print_fleet_grid(Playerfleet, pGameGrid, "Player Grid")
-    print_fleet_grid(Computerfleet, cGameGrid, "Computer Grid")
-# show grid on screen function
-def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, ComputerGrid: list) -> None:
-    # Draw the grid to the screen
-    GameGrids = [PlayerGrid, ComputerGrid]
-
-    for grid in GameGrids:
-        if type(grid[0][0]) == tuple:
-            # GameGrids = [PlayerGrid, ComputerGrid], grid = PlayerGrid or ComputerGrid
-            for Row in grid:
-                # Row = [Col, Col, Col, Col, Col, Col, Col, Col, Col, Col]
-                for Col in Row:
-                    # Col = [(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots)], Row = (yCooForShots, xCooForShots)
-
-                    # (window, color, (yCooForShots, xCooForShots, width, height), thickness)
-                    pygame.draw.rect(Window, white, (Col[0], Col[1], CellSize, CellSize), 1)
-        # else: # Draw shots grid
-        #     for i, row in enumerate(grid):
-        #         for j, cell in enumerate(row):
-        #             pygame.draw.rect(Window, white, (i, j, CellSize, CellSize), 1)
-#Update screen before and after placing ships
-def UpdateGameScreen(window: pygame.surface) -> None:
-    global game_started, game_over, resetGameGrid # Access the global game_started variable
-
-    if not game_started:
-        # Fill the window with black color
-        window.fill(black)
-
-        # Draw Grids to the screen
-        ShowGridOnScreen(window, CellSize, pGameGrid, cGameGrid)
-
-        # Draw Ships to the screen
-        for ship in Playerfleet:
-            ship.draw(window)
-            ship.snap_to_grid(pGameGrid)
-
-        for ship in Computerfleet:
-            ship.draw(window)
-
-        if all_ships_placed() and not game_started:
-            if start_button.Draw(window):
-                game_started = True
-                print_game_state()
-                copyGrids()
-
-
-
-    else: # the game started
-        while resetGameGrid:
-            # Fill the window with black color
-            window.fill(black)
-
-            # Draw Grids to the screen
-            ShowGridOnScreen(window, CellSize, pGameGrid, cGameGrid)
-
-            # Draw Ships to the screen
-            for ship in Playerfleet:
-                ship.draw(window)
-                ship.snap_to_grid(pGameGrid)
-            resetGameGrid = False
-
-
-        if not game_over:
-            draw_shots()
-        else:
-            draw_shots()
-            font = pygame.font.SysFont("OCR-A Extended", 100)
-            text = font.render("GAME OVER", True, green)
-            text_pos = (350,600)
-            window.blit(text, text_pos)
-
-    # Update the display
-    pygame.display.update()
-# Set grid size based on user input
-def set_grid_size(new_rows: int, new_cols: int) -> None:
-    # function to set grid size and dynamically adjust cell size
-    global raws, cols, CellSize, pGameGrid, pGameLogic, cGameGrid, cGameLogic
-    raws = new_rows
-    cols = new_cols
-
-    # divide ScreenHight by 2 to leave space for both grids and divide by raws to get the cell size for the grid
-    CellSize = min(ScreenWidth // cols, ScreenHight // (2 * raws))
-    # create game grid for player and computer grid with the new raws, cols and cell size
-    pGameGrid = CreateGameGrid(raws, cols, CellSize, (50, 50))
-    cGameGrid = CreateGameGrid(raws, cols, CellSize, (((ScreenWidth - 50) - (cols * CellSize)), 50))
-# Make a copy of players grids to calculate hits
-def copyGrids():
-    global player1, player1_fleet, player1_reference, player2, player2_fleet, player2_reference
-    player1 = copy.deepcopy(copy_grids[0])
-    player2 = copy.deepcopy(copy_grids[1])
-    player1_reference = copy.deepcopy(copy_grids[0])
-    player2_reference = copy.deepcopy(copy_grids[1])
-    player1_fleet = Player1Health
-    player2_fleet = Player2Health
-# Draw shots indicators
-def draw_shots():
-    if game_started:
-        try:
-            shot = search_hit(yCooForShots , xCooForShots)
-            if shot[0]:
-                pygame.draw.circle(GameScreen, colors[shot[1]], (
-                cGameGrid[yCooForShots][xCooForShots][0] + CellSize//2 , cGameGrid[yCooForShots][xCooForShots][1] + CellSize//2),
-                                   CellSize // 4)
-            if shot[2]:
-                sunkenShip = shot[3]
-                center = (cGameGrid[yCooForShots][xCooForShots][0] + CellSize//2, cGameGrid[yCooForShots][xCooForShots][1] + CellSize//2)
-                for i in range(len(sunkenShip)):
-                    center = (cGameGrid[sunkenShip[i][0]][sunkenShip[i][1]][0] + CellSize//2,
-                              cGameGrid[sunkenShip[i][0]][sunkenShip[i][1]][1] + CellSize//2)
-                    pygame.draw.circle(GameScreen, red, center, CellSize // 4)
-        except:
-            pass
-
-# - - - - - - - - Initialize Game's Grids - - - - - - - -
 # set the grid size for the game (rows, cols)
-set_grid_size(grid_size, grid_size)
+set_grid_size(10, 10)
+
+
+# Button instance for start and exit button
+
+exit_button = Button(ScreenWidth // 2, (ScreenHight // 2) + ScreenWidth // 25, exit_img, ScreenHight, ScreenWidth)
+start_button = Button(ScreenWidth // 2, (ScreenHight // 2) - ScreenWidth // 10, start_img, ScreenHight, ScreenWidth)
+setting_button = Button(ScreenWidth - 10, 30, setting_img, ScreenHight, ScreenWidth)
+setting_button.image = pygame.transform.scale(setting_button.image, (50, 50))
+
+settings_panel = pygame.Surface((400, 300))
+settings_panel.fill((50, 50, 50))  # Dark gray background
+settings_panel_rect = settings_panel.get_rect(center=(ScreenWidth//2, ScreenHight//2))
+
 
 # Initialise players
-# create player fleet
+
+    # create player fleet
 Playerfleet = createfleet()
 
-# create computer fleet
+    # create computer fleet
 Computerfleet = createfleet()
 randomized_computer_ships(Computerfleet, cGameGrid)
 
-# - - - - - - - - - - - - Main Game Loop - - - - - - - - - - - - -
 
-# Initialize running game
+
+# Main game loop
 run_game = True
 
-# Events handler
 def handle_events() -> None:
-    global run_game, yCooForShots, xCooForShots
+    global run_game
 
     # for loop to handle events in the game
     for event in pygame.event.get():
 
         # check if the event is a quit event
         if event.type == pygame.QUIT:
+
             # set run_game to False for exiting the game loop
             run_game = False
 
         # check if the event is a mouse button down event
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if not game_started:
-                if event.button == 1: # check if the mouse button pressed was the left mouse button
-                    # call the handle_ship_selection function to handle ship selection
-                    handle_ship_selection()
-                    UpdateGameScreen(GameScreen)
 
-            else: # if the game started
-                if event.button == 1: # check if the mouse button pressed was the left mouse button
-                    xCooForShots , yCooForShots = pygame.mouse.get_pos() # Get mouse's position
+            # check if the mouse button pressed was the left mouse button
+            if event.button == 1:
+                # call the handle_ship_selection function to handle ship selection
+                handle_ship_selection()
 
-                    # Based on turns, make borders around the appropriate grid, calculate which cell the mouse clicked
-                    if player1Turn and cGameGrid[0][0][0] <= xCooForShots <= cGameGrid[grid_size-1][grid_size-1][0] + CellSize and cGameGrid[0][0][1] <= yCooForShots <= cGameGrid[grid_size-1][grid_size-1][1] + CellSize:
-                        xCooForShots = math.floor((xCooForShots // CellSize) - (grid_size*1.5))
-                        yCooForShots = math.ceil((yCooForShots // CellSize) - (grid_size*0.1))
-
-                    elif player2Turn and pGameGrid[0][0][0] <= xCooForShots <= pGameGrid[grid_size-1][grid_size-1][0] + CellSize and pGameGrid[0][0][1] <= yCooForShots <= pGameGrid[grid_size-1][grid_size-1][1] + CellSize:
-                        xCooForShots = math.floor((xCooForShots // CellSize) - (grid_size*1.5))
-                        yCooForShots = math.ceil((yCooForShots // CellSize) - (grid_size*0.1))
-
-# Main game loop
 while run_game:
     handle_events()
     UpdateGameScreen(GameScreen)
