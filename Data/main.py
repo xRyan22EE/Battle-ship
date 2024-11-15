@@ -3,18 +3,19 @@
 from grid import CreateGameGrid
 from game_utils import LoadImage
 from Buttons import Button
+import time
 
 # Import modules
 import pygame
 import random
 import copy
 import math
-
 # - - - - - - - - - - - - - - - - - - Initialization - - - - - - - - - - - - - - - - - -
 # module Initialization
 pygame.init()
 
 # game variables
+clock = pygame.time.Clock()
 game_started = False # variable to check if the game has started
 
 # Game Settings and Variables
@@ -72,6 +73,7 @@ Players_fleet = {
 # Set Players Ship's Health, where each key represents the firs two letters of the ship's name
 Player1Health = {
     "ca": 5, "ba": 4, "cr": 4, "de": 3, "su": 3, "pa": 2, "re": 2}
+
 Player2Health = {
     "ca": 5, "ba": 4, "cr": 4, "de": 3, "su": 3, "pa": 2, "re": 2}
 
@@ -79,11 +81,17 @@ Player2Health = {
 
 # loading game sound and Image
 start_img = pygame.image.load("images/Button/start_btn.png").convert_alpha()
+exit_img = pygame.image.load("images/Button/exit_btn.png").convert_alpha()
+setting_img = pygame.image.load("images/Button/settings_icon.png").convert_alpha()
+
 
 # - - - - - - - - - - - - - - Buttons - - - - - - - - - - - - - -
 
 # Button instance for start and exit button
 start_button = Button(ScreenWidth // 2, (ScreenHight // 2) - ScreenWidth // 10, start_img, ScreenHight, ScreenWidth)
+exit_button = Button(ScreenWidth // 2, (ScreenHight // 2) + ScreenWidth // 25, exit_img, ScreenHight, ScreenWidth)
+setting_button = Button(ScreenWidth // 2 + ScreenHight//30, ScreenHight // 2, setting_img, ScreenHight, ScreenWidth)
+setting_button.image = pygame.transform.scale(setting_button.image, (50, 50))
 
 # - - - - - - - - Game Assets and Objects - - - - - - - - -
 class ship:
@@ -373,6 +381,7 @@ def createfleet() -> list:
             adjusted_size = (CellSize*0.65, CellSize * cell_count)
         fleet.append(ship(name, img_path, pos, adjusted_size))
     return fleet
+
 def randomized_computer_ships(shiplist: list, gamegrid: list) -> None:
     for ship in shiplist:
         placed = False
@@ -403,15 +412,18 @@ def randomized_computer_ships(shiplist: list, gamegrid: list) -> None:
                 # Snap to grid if valid, and mark as placed
                 ship.computer_snap_to_grid(gamegrid)
                 placed = True
+
 def all_ships_placed() -> bool:
     # Check if all ships are placed in the grid
 
     # Return True if all ships are placed in the grid, otherwise return False
     return all(ship.is_placed_in_grid() for ship in Playerfleet)
+
 def sortfleet(ship, shiplist: list) -> None:
     # function to sort ships in the list to the top of the list when selected to show on top of other ships
     shiplist.remove(ship)
     shiplist.append(ship)
+
 # function to handle ship selection
 def handle_ship_selection() -> None:
     # for loop to iterate through the player fleet
@@ -494,6 +506,7 @@ def search_hit(yCooForShots, xCooForShots):
     return (valid_input,CurrentOpponent[0][yCooForShots][xCooForShots],sunken_ship,sunkenList)
 
 # - - - - - - - - Game Utility Functions - - - - - - - - -
+
 # game utility functions
 def print_game_state() -> None:
     global copy_grids
@@ -579,6 +592,7 @@ def print_game_state() -> None:
     # Print both player and computer grids using their respective reference grids
     print_fleet_grid(Playerfleet, pGameGrid, "Player Grid")
     print_fleet_grid(Computerfleet, cGameGrid, "Computer Grid")
+
 # show grid on screen function
 def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, ComputerGrid: list) -> None:
     # Draw the grid to the screen
@@ -598,9 +612,10 @@ def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, Co
         #     for i, row in enumerate(grid):
         #         for j, cell in enumerate(row):
         #             pygame.draw.rect(Window, white, (i, j, CellSize, CellSize), 1)
+
 #Update screen before and after placing ships
 def UpdateGameScreen(window: pygame.surface) -> None:
-    global game_started, game_over, resetGameGrid # Access the global game_started variable
+    global game_started, game_over, resetGameGrid, run_game # Access the global game_started variable
 
     if not game_started:
         # Fill the window with black color
@@ -617,15 +632,20 @@ def UpdateGameScreen(window: pygame.surface) -> None:
         for ship in Computerfleet:
             ship.draw(window)
 
+        # Draw Button to the screen
         if all_ships_placed() and not game_started:
             if start_button.Draw(window):
                 game_started = True
                 print_game_state()
                 copyGrids()
 
+        setting_button.Draw(window)
 
+        
 
+        
     else: # the game started
+
         while resetGameGrid:
             # Fill the window with black color
             window.fill(black)
@@ -651,6 +671,7 @@ def UpdateGameScreen(window: pygame.surface) -> None:
 
     # Update the display
     pygame.display.update()
+
 # Set grid size based on user input
 def set_grid_size(new_rows: int, new_cols: int) -> None:
     # function to set grid size and dynamically adjust cell size
@@ -663,6 +684,7 @@ def set_grid_size(new_rows: int, new_cols: int) -> None:
     # create game grid for player and computer grid with the new raws, cols and cell size
     pGameGrid = CreateGameGrid(raws, cols, CellSize, (50, 50))
     cGameGrid = CreateGameGrid(raws, cols, CellSize, (((ScreenWidth - 50) - (cols * CellSize)), 50))
+
 # Make a copy of players grids to calculate hits
 def copyGrids():
     global player1, player1_fleet, player1_reference, player2, player2_fleet, player2_reference
@@ -672,6 +694,7 @@ def copyGrids():
     player2_reference = copy.deepcopy(copy_grids[1])
     player1_fleet = Player1Health
     player2_fleet = Player2Health
+
 # Draw shots indicators
 def draw_shots():
     if game_started:
@@ -692,10 +715,12 @@ def draw_shots():
             pass
 
 # - - - - - - - - Initialize Game's Grids - - - - - - - -
+
 # set the grid size for the game (rows, cols)
 set_grid_size(grid_size, grid_size)
 
 # Initialise players
+
 # create player fleet
 Playerfleet = createfleet()
 
@@ -743,6 +768,7 @@ def handle_events() -> None:
 
 # Main game loop
 while run_game:
+    clock.tick(60)
     handle_events()
     UpdateGameScreen(GameScreen)
 

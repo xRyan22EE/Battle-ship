@@ -1,38 +1,49 @@
 import pygame
 import time 
 # A class to create buttons
-class Button():
+class Button:
 
-    def __init__(self, x, y, img, ScreenHight, ScreenWidth) -> None:
-        self.image = img  # load the image of the button
-        # Calculate the desired size based on the screen size
-        button_width = ScreenWidth // 10
-        button_height = ScreenHight // 15
-        self.image = pygame.transform.scale(self.image,
-                                            (button_width, button_height))  # scale the image to the desired size
-        self.rect = self.image.get_rect()  # get the rectangle of the image
-        self.rect.center = (x, y)  # set the position of the button
-        self.clicked = False  # set the button to not clicked
+    def __init__(self, x: int, y: int, content, screen_height=None, screen_width=None) -> None:
+        # Initialize font
+        self.font = pygame.font.SysFont('Arial', 30)
+        
+        # Handle both image and text buttons
+        if isinstance(content, str):
+            # Create text surface
+            self.image = self.font.render(content, True, (255, 255, 255))
+            self.button_width = self.image.get_width() + 20  # Add padding
+            self.button_height = self.image.get_height() + 10
+        else:
+            # Handle image button
+            self.image = content
+            if screen_width and screen_height:
+                self.button_width = screen_width // 10
+                self.button_height = screen_height // 15
+                self.image = pygame.transform.scale(self.image, (self.button_width, self.button_height))
 
-    def Draw(self, window) -> bool:
+        # Create button rectangle
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        
+        # Button state
+        self.clicked = False
 
-        action = False  # set the action to False
-
-        # grab the mouse position
+    def Draw(self, surface: pygame.Surface) -> bool:
+        action = False
+        
+        # Get mouse position
         pos = pygame.mouse.get_pos()
-
-        # check if the mouse is over the button
+        
+        # Check mouseover and clicked conditions
         if self.rect.collidepoint(pos):
-
-            # if the button is clicked, set the clicked variable to True and perform the action
-            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
                 self.clicked = True
                 action = True
-                time.sleep(0.2)
-
-            # if the button is not clicked, reset the clicked variable
-            if pygame.mouse.get_pressed()[0] == 0:
-                self.clicked = False
-        # draw the button on the screen
-        window.blit(self.image, (self.rect.x, self.rect.y))
+        
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+            
+        # Draw button
+        surface.blit(self.image, self.rect)
+        
         return action
