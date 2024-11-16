@@ -486,7 +486,7 @@ def UpdateGameScreen(window: pygame.surface) -> None:
             game_started = True
             print_game_state()
     
-    if exit_button.Draw(window) and not settings_active:
+    if exit_button.Draw(window):
         run_game = False
     if game_started:
         exit_button.rect.center = (ScreenWidth // 2, (ScreenHight // 2) - ScreenWidth // 10)

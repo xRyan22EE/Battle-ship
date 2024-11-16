@@ -10,6 +10,7 @@ import pygame
 import random
 import copy
 import math
+
 # - - - - - - - - - - - - - - - - - - Initialization - - - - - - - - - - - - - - - - - -
 # module Initialization
 pygame.init()
@@ -24,7 +25,7 @@ ScreenHight = 960
 grid_size = 10
 resetGameGrid = True
 game_over = False
-
+settings_active = False
 # Set first shot out of boundaries till the user input
 yCooForShots = grid_size +1
 xCooForShots = grid_size +1
@@ -83,15 +84,19 @@ Player2Health = {
 start_img = pygame.image.load("images/Button/start_btn.png").convert_alpha()
 exit_img = pygame.image.load("images/Button/exit_btn.png").convert_alpha()
 setting_img = pygame.image.load("images/Button/settings_icon.png").convert_alpha()
-
+settings_panel = pygame.Surface((600, 500))
+settings_panel.fill((50, 50, 50))  # Dark gray background
+settings_panel_rect = settings_panel.get_rect(center=(ScreenWidth//2, ScreenHight//2)) # Center the panel on the screen
 
 # - - - - - - - - - - - - - - Buttons - - - - - - - - - - - - - -
 
 # Button instance for start and exit button
 start_button = Button(ScreenWidth // 2, (ScreenHight // 2) - ScreenWidth // 10, start_img, ScreenHight, ScreenWidth)
-exit_button = Button(ScreenWidth // 2, (ScreenHight // 2) + ScreenWidth // 25, exit_img, ScreenHight, ScreenWidth)
+# exit_button = Button(ScreenWidth // 2, (ScreenHight // 2) + ScreenWidth // 25, exit_img, ScreenHight, ScreenWidth)
 setting_button = Button(ScreenWidth // 2 + ScreenHight//30, ScreenHight // 2, setting_img, ScreenHight, ScreenWidth)
 setting_button.image = pygame.transform.scale(setting_button.image, (50, 50))
+
+
 
 # - - - - - - - - Game Assets and Objects - - - - - - - - -
 class ship:
@@ -426,9 +431,11 @@ def sortfleet(ship, shiplist: list) -> None:
 
 # function to handle ship selection
 def handle_ship_selection() -> None:
+    if settings_active:
+        return  # Do not allow ship selection when settings menu is active
+
     # for loop to iterate through the player fleet
     for i in Playerfleet:
-
         # check if the mouse position is within the rectangle of the ship
         if i.rect.collidepoint(pygame.mouse.get_pos()):
             # set the ship to active
@@ -506,6 +513,25 @@ def search_hit(yCooForShots, xCooForShots):
     return (valid_input,CurrentOpponent[0][yCooForShots][xCooForShots],sunken_ship,sunkenList)
 
 # - - - - - - - - Game Utility Functions - - - - - - - - -
+
+# Button functionality
+def button_functionality(window) -> None:
+    global settings_active
+
+    # Check if the settings button is clicked 
+    if setting_button.Draw(window) and not settings_active:
+        settings_active = not settings_active
+
+    if settings_active:
+        overlay = pygame.Surface((ScreenWidth, ScreenHight))
+        overlay.fill((0, 0, 0))
+        overlay.set_alpha(128)  # Set the transparency level
+        window.blit(overlay, (0, 0))  # Draw the overlay on top of the screen
+
+        window.blit(settings_panel, settings_panel_rect.topleft)  # Draw the settings panel on the screen
+
+    pygame.display.update()
+    
 
 # game utility functions
 def print_game_state() -> None:
@@ -615,7 +641,7 @@ def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, Co
 
 #Update screen before and after placing ships
 def UpdateGameScreen(window: pygame.surface) -> None:
-    global game_started, game_over, resetGameGrid, run_game # Access the global game_started variable
+    global game_started, game_over, resetGameGrid # Access the global game_started variable
 
     if not game_started:
         # Fill the window with black color
@@ -632,20 +658,16 @@ def UpdateGameScreen(window: pygame.surface) -> None:
         for ship in Computerfleet:
             ship.draw(window)
 
-        # Draw Button to the screen
-        if all_ships_placed() and not game_started:
+        if all_ships_placed() and not game_started and not settings_active:
             if start_button.Draw(window):
                 game_started = True
                 print_game_state()
                 copyGrids()
+        button_functionality(window)
 
-        setting_button.Draw(window)
 
-        
 
-        
     else: # the game started
-
         while resetGameGrid:
             # Fill the window with black color
             window.fill(black)
@@ -660,9 +682,11 @@ def UpdateGameScreen(window: pygame.surface) -> None:
             resetGameGrid = False
 
 
-        if not game_over:
+        if not game_over and not settings_active:
             draw_shots()
-        else:
+            button_functionality(window)
+        elif game_over:
+            button_functionality(window)
             draw_shots()
             font = pygame.font.SysFont("OCR-A Extended", 100)
             text = font.render("GAME OVER", True, green)
@@ -735,7 +759,7 @@ run_game = True
 
 # Events handler
 def handle_events() -> None:
-    global run_game, yCooForShots, xCooForShots
+    global run_game, yCooForShots, xCooForShots, settings_active
 
     # for loop to handle events in the game
     for event in pygame.event.get():
@@ -744,7 +768,10 @@ def handle_events() -> None:
         if event.type == pygame.QUIT:
             # set run_game to False for exiting the game loop
             run_game = False
-
+        
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            settings_active = not settings_active
+        
         # check if the event is a mouse button down event
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if not game_started:
